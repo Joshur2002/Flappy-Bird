@@ -1,70 +1,52 @@
 #include "Flappy.h"
 
-/*
-Flappy()
-	DESCRIPTION: Flappy's constructor
-*/
 Flappy::Flappy() {
-	// set location & movement
-	Flappy_position.x = 100;
-	Flappy_position.y = 200;
-	x_speed = 200;
+	// initialize position & velocity
+	Flappy_position.x = 500;
+	Flappy_position.y = 500;
+	Flappy_velocity.x = 350;
+	Flappy_velocity.y = 450;
 
-	// set visuals
+	// visuals
 	Flappy_texture.loadFromFile("flappy.png");
 	Flappy_sprite.setTexture(Flappy_texture);
 	Flappy_sprite.setScale(.5, .5);
 
-	// set flag defaults
-	is_left_pressed = false;
-	is_right_pressed = false;
+	// flags
+	was_prev_space = false;
+	//start_key_pressed = false;
 }
 
-/* 
-getSprite()
-	DESCRIPTION: Allows other func to use Flappy's private sprite
-*/
 Sprite Flappy::getSprite() {
 	return Flappy_sprite;
 }
 
-/* 
-moveLeft
-	DESCRIPTION: Sets the moving left flag for Flappy
-*/
-void Flappy::moveLeft() {
-	is_left_pressed = true;
-}
+void Flappy::update(bool start_key_pressed, bool is_space_pressed, float time_elapsed) {
+// start key was pressed
+  	if (start_key_pressed) {
+		// x-axis 
+		Flappy_position.x += time_elapsed * Flappy_velocity.x;
+		if (Flappy_position.x >= 2770)
+			Flappy_position.x = 0;
+		
 
-/*
-moveRight
-	DESCRIPTION: Sets the moving right flag for Flappy
-*/
-void Flappy::moveRight() {
-	is_right_pressed = true;
-}
-
-/*
-stopLeft
-	DESCRIPTION: Sets the moving left flag for Flappy
-*/
-void Flappy::stopLeft() {
-	is_left_pressed = false;
-}
-
-/*
-stopRight
-	DESCRIPTION: Sets the moving right flag for Flappy
-*/
-void Flappy::stopRight() {
-	is_right_pressed = false;
-}
-
-void Flappy::update(float time_elapsed) {
-	if (is_left_pressed)
-		Flappy_position.x -= x_speed * time_elapsed;
-	if (is_right_pressed)
-		Flappy_position.x += x_speed * time_elapsed;
+		// y-axis
+		if (is_space_pressed) {
+			if (was_prev_space) {
+				Flappy_position.y += time_elapsed * Flappy_velocity.y;
+			}
+			else {
+				Flappy_position.y -= time_elapsed * Flappy_velocity.y + 200;
+				was_prev_space = true;
+			}
+		}
+		else {
+			Flappy_position.y += time_elapsed * Flappy_velocity.y;
+			was_prev_space = false;
+		}
+		if (Flappy_position.y >= 1700)
+			Flappy_position.y = 1700;
+	}
 
 	Flappy_sprite.setPosition(Flappy_position);
 }

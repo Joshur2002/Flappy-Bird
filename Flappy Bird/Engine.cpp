@@ -1,34 +1,57 @@
 #include "Engine.h"
 
 Engine::Engine() {
-	// display window
+	// window
 	Vector2f resolution;
 	resolution.x = VideoMode::getDesktopMode().width;
 	resolution.y = VideoMode::getDesktopMode().height;
-	window.create(VideoMode(resolution.x, resolution.y), "Flappy Bird", Style::Resize);
+
+	gameWindow.create(VideoMode(resolution.x, resolution.y), "Flappy Bird", Style::Resize);
 
 	// visuals
 	bg_texture.loadFromFile("flappy_bg.png");
 	bg_sprite.setTexture(bg_texture);
-	bg_sprite.setScale(3.5, 3.5);
+	bg_sprite.setScale(3.2, 3.2);
+
+	start_pressed = false;
+	is_space_pressed = false;
+}
+
+void Engine::input() {
+	// exit
+	if (Keyboard::isKeyPressed(Keyboard::Escape))
+		gameWindow.close();
+
+	// jump
+	if (Keyboard::isKeyPressed(Keyboard::Space)) {
+		start_pressed = true;
+		is_space_pressed = true;
+	}
+	else
+		is_space_pressed = false;
+}
+
+void Engine::update(float dt_as_sec) {
+	Flappy.update(start_pressed, is_space_pressed, dt_as_sec);
+}
+
+void Engine::draw() {
+	gameWindow.clear(Color::White);
+	gameWindow.draw(bg_sprite);
+	gameWindow.draw(Flappy.getSprite());
+
+	gameWindow.display();
 }
 
 void Engine::start() {
-	// clock for time
 	Clock clock;
-
-	while (window.isOpen()) {
-		// reset timer && convert
+	float dt_in_sec;
+	// game running
+	while (gameWindow.isOpen()) {
 		Time dt = clock.restart();
-		float dt_as_sec = dt.asSeconds();
-
-		/*
-			game logic sequence
-				check for inputs->update the game->draw the updates onto screen
-		*/
+		dt_in_sec = dt.asSeconds();
 		input();
-		update(dt_as_sec);
+		update(dt_in_sec);
 		draw();
 	}
 }
-

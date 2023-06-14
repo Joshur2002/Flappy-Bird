@@ -4,7 +4,7 @@
 class Engine {
 private:
 	// Render window
-	RenderWindow window;
+	RenderWindow gameWindow;
 
 	// visuals
 	Sprite bg_sprite;
@@ -17,6 +17,10 @@ private:
 	void input();
 	void update(float dt_as_sec);
 	void draw();
+
+	// flag
+	bool start_pressed;
+	bool is_space_pressed;
 
 public:
 	// Constructor

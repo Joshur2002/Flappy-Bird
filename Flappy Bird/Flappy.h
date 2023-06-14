@@ -1,20 +1,20 @@
 #pragma once
 #include "SFML/Graphics.hpp"
+//#include "winuser.h"
 
 using namespace sf;
 class Flappy {
 private:
-	// bird's location & movement
+	// bird's position & velocity
 	Vector2f Flappy_position;
-	float x_speed;
+	Vector2f Flappy_velocity;
 
 	// visuals
 	Sprite Flappy_sprite;
 	Texture Flappy_texture;
 
-	// keyboard flags
-	bool is_left_pressed;
-	bool is_right_pressed;
+	// flags
+	bool was_prev_space;
 
 public:
 	// constructor
@@ -23,12 +23,6 @@ public:
 	// visual func
 	Sprite getSprite();
 
-	// movement func
-	void moveLeft();
-	void moveRight();
-	void stopLeft();
-	void stopRight();
-
 	// screen func
-	void update(float time_elapsed);
+	void update(bool start_key_pressed, bool is_space_pressed, float time_elapsed);
 };
