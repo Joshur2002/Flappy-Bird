@@ -3,15 +3,17 @@
 Engine::Engine() {
 	// window
 	Vector2f resolution;
-	resolution.x = VideoMode::getDesktopMode().width;
-	resolution.y = VideoMode::getDesktopMode().height;
+	resolution.x = VideoMode::getDesktopMode().width;	// 2880
+	resolution.y = VideoMode::getDesktopMode().height;	// 1920
 
-	gameWindow.create(VideoMode(resolution.x, resolution.y), "Flappy Bird", Style::Resize);
+	gameWindow.create(VideoMode(resolution.x, resolution.y), "Flappy Bird");
+	//gameWindow.create(VideoMode(800, 600), "Flappy Bird", Style::Resize);
+
 
 	// visuals
-	bg_texture.loadFromFile("flappy_bg.png");
+	bg_texture.loadFromFile("flappy_bg2.png");
 	bg_sprite.setTexture(bg_texture);
-	bg_sprite.setScale(3.2, 3.2);
+	bg_sprite.setScale(20.0, 20.0);
 
 	start_pressed = false;
 	is_space_pressed = false;
@@ -39,7 +41,10 @@ void Engine::draw() {
 	gameWindow.clear(Color::White);
 	gameWindow.draw(bg_sprite);
 	gameWindow.draw(Flappy.getSprite());
-
+	Vector2f resolution;
+	/*resolution.x = VideoMode::getDesktopMode().width;
+	resolution.y = VideoMode::getDesktopMode().height;
+	printf("Game window size %f is while %f is y\n", resolution.x, resolution.y);*/
 	gameWindow.display();
 }
 

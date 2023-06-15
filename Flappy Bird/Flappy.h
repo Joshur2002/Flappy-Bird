@@ -1,8 +1,11 @@
 #pragma once
 #include "SFML/Graphics.hpp"
-//#include "winuser.h"
 
 using namespace sf;
+
+// 9.8 was ok
+#define GRAVITY 9.8
+
 class Flappy {
 private:
 	// bird's position & velocity
