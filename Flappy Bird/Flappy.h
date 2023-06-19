@@ -2,6 +2,7 @@
 #include "SFML/Graphics.hpp"
 
 using namespace sf;
+using namespace std;
 
 // 9.8 was ok
 #define GRAVITY 9.8
@@ -11,6 +12,7 @@ private:
 	// bird's position & velocity
 	Vector2f Flappy_position;
 	Vector2f Flappy_velocity;
+	float deg;
 
 	// visuals
 	Sprite Flappy_sprite;
