@@ -19,6 +19,10 @@ Flappy::Flappy() {
 	//start_key_pressed = false;
 }
 
+Vector2f Flappy::getFlappy() {
+	return Flappy_position;
+}
+
 Sprite Flappy::getSprite() {
 	return Flappy_sprite;
 }
@@ -64,8 +68,8 @@ void Flappy::update(bool start_key_pressed, bool is_space_pressed, float time_el
 			was_prev_space = false;
 		}
 		// floor cap
-		if (Flappy_position.y >= 1440)
-			Flappy_position.y = 1440;
+		if (Flappy_position.y >= GROUND)
+			Flappy_position.y = GROUND;
 	}
 	Flappy_sprite.setPosition(Flappy_position);
 	Flappy_sprite.setRotation(deg);
