@@ -27,11 +27,11 @@ public:
 	Flappy();
 
 	// FLappy func
-	Vector2f getFlappy();
+	Vector2f getFlappy_Position();
 
 	// visual func
 	Sprite getSprite();
 
 	// screen func
-	void update(bool start_key_pressed, bool is_space_pressed, float time_elapsed);
+	void update(bool start_key_pressed, bool is_space_pressed, bool is_collision, float time_elapsed);
 };
