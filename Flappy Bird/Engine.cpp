@@ -45,9 +45,22 @@ Engine::Engine() {
 		pipes[i].is_visible = false;
 	}
 
+	textures_list = {	"Sprites/ascii_0.png",
+						"Sprites/ascii_1.png",
+						"Sprites/ascii_2.png", 
+						"Sprites/ascii_3.png", 
+						"Sprites/ascii_4.png", 
+						"Sprites/ascii_5.png", 
+						"Sprites/ascii_6.png", 
+						"Sprites/ascii_7.png", 
+						"Sprites/ascii_8.png",
+						"Sprites/ascii_9.png"	};
+
+	// flags/vars
 	start_pressed = false;
 	is_space_pressed = false;
 	is_collision = false;
+	updated_score = false;
 
 	X_Speed = X_SCROLL_SPEED;
 	score = 0;
@@ -97,6 +110,8 @@ void Engine::update(float dt_as_sec) {
 	gnd_sprite1.move(-X_Speed * dt_as_sec, 0);
 	gnd_sprite2.move(-X_Speed * dt_as_sec, 0);
 
+	updated_score = false;
+
 	// pipe scrolling logic
 	for (int i = 0; i < NUM_PIPES; i++) {
 		Vector2f pipe_up_position = pipes[i].pipe_up_sprite.getPosition();
@@ -121,10 +136,18 @@ void Engine::update(float dt_as_sec) {
 			pipes[i].is_visible = false;
 		}
 		// score pipe logic
-		/*if (Flappy_position.x == pipes[i].pipe_up_sprite.getPosition().x && Flappy_position.y < pipes[i].pipe_up_sprite.getPosition().y) {
-			score++;
-			reset();
-		}*/
+		//if (Flappy_position.x >= pipes[i].pipe_up_sprite.getPosition().x + PIPE_LEFT_COLLISION_OFFSET + 330 && Flappy_position.x <= pipes[i].pipe_up_sprite.getPosition().x + 992 && !updated_score) {
+
+		if (closeEnough(Flappy_position.x, pipes[i].pipe_up_sprite.getPosition().x) && !updated_score) {
+			// score has not been updated
+			/*if (!updated_score) {
+				score++;;
+				updated_score = true;
+			}*/
+  			score++;
+			updated_score = true;
+		}
+		//updated_score = false;
 	}
 
 
@@ -143,17 +166,28 @@ draw()
 void Engine::draw() {
 	// draw from back to front
 	gameWindow.clear(Color::White);
+
+	//background
 	gameWindow.draw(bg_sprite);
 	
+	// pipes
 	for (int i = 0; i < NUM_PIPES; i++) {
 		if (pipes[i].is_visible == true) {
 			gameWindow.draw(pipes[i].pipe_up_sprite);
 			gameWindow.draw(pipes[i].pipe_down_sprite);
 		}
 	}
+	// ground
 	gameWindow.draw(gnd_sprite1);
 	gameWindow.draw(gnd_sprite2);
 
+	// scoreboard
+	scoreboard();
+	for (int i = 0; i < score_sprites.size(); i++) {
+		gameWindow.draw(score_sprites[i]);
+	}
+
+	// Flappy
 	gameWindow.draw(Flappy.getSprite());
 	gameWindow.display();
 }
@@ -178,7 +212,7 @@ void Engine::checkCollision() {
 	// pipes
 	for (int i = 0; i < NUM_PIPES; i++) {
 		if (Flappy_position.x >= pipes[i].pipe_up_sprite.getPosition().x + PIPE_LEFT_COLLISION_OFFSET && Flappy_position.x <= pipes[i].pipe_up_sprite.getPosition().x + PIPE_RIGHT_COLLISION_OFFSET && Flappy_position.y >= pipes[i].pipe_up_sprite.getPosition().y + PIPE_OPENING_COLLISION_OFFSET ||
-			Flappy_position.x >= pipes[i].pipe_down_sprite.getPosition().x + PIPE_LEFT_COLLISION_OFFSET && Flappy_position.x <= pipes[i].pipe_down_sprite.getPosition().x + PIPE_RIGHT_COLLISION_OFFSET && Flappy_position.y <= pipes[i].pipe_down_sprite.getPosition().y - PIPE_OPENING_COLLISION_OFFSET){
+			Flappy_position.x >= pipes[i].pipe_down_sprite.getPosition().x + PIPE_LEFT_COLLISION_OFFSET && Flappy_position.x <= pipes[i].pipe_down_sprite.getPosition().x + PIPE_RIGHT_COLLISION_OFFSET && Flappy_position.y <= pipes[i].pipe_down_sprite.getPosition().y - PIPE_OPENING_COLLISION_OFFSET) {
 			is_collision = true;
 			reset();
 		}
@@ -194,8 +228,54 @@ score()
 	EFFECT:
 */
 void Engine::scoreboard() {
-	//1234567++1234567;
+	// initialize
+	int num_digits = 0;
+	int divisor = 1;
+	int result = 1;
+	which_textures.clear();
+	score_textures.clear();
+	score_sprites.clear();
 
+	// calc sprites need
+	if (score == 0) {
+		num_digits = 1;
+		which_textures.push_back(0);
+	}
+	else {
+		while (result > 0) {
+			result = (score / divisor) % 10;
+			// break early
+			if (result <= 0)
+				break;
+			num_digits++;
+			divisor *= 10;
+
+			which_textures.push_back(result);
+		}
+	}
+	// set up sprites
+	score_textures.resize(num_digits);
+	score_sprites.resize(num_digits);
+	float score_position = 100;
+	for (int i = 0; i < score_sprites.size(); i++) {
+		score_textures[i].loadFromFile(textures_list[which_textures[i]]);
+		score_sprites[i].setTexture(score_textures[i]);
+		score_sprites[i].setScale(10.f, 10.f);
+		score_sprites[i].setPosition(score_position, 100);
+		score_position += 100;
+	}
+
+
+}
+
+bool Engine::closeEnough(float a, float b) {
+	float delta = 0.40;	// lower value -> higher precision; higher value -> lower precision
+	if (abs(a - b) < delta) {
+		return true;
+	}
+	else {
+		return false;
+	}
 }
 
 /*

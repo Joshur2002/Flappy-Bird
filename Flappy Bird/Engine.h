@@ -38,6 +38,11 @@ private:
 	Texture pipe_up_texture;
 	Texture pipe_down_texture;
 
+	vector<string> textures_list;
+	vector<Texture> score_textures;
+	vector<Sprite> score_sprites;
+	vector<int> which_textures;
+
 	// copy of Flappy constructor
 	Flappy Flappy;
 
@@ -47,12 +52,14 @@ private:
 	void draw();
 	void checkCollision();
 	void scoreboard();
+	bool closeEnough(float a, float b);
 	void reset();
 
 	// flag
 	bool start_pressed;
 	bool is_space_pressed;
 	bool is_collision;
+	bool updated_score;
 
 	// vars
 	float X_Speed;
