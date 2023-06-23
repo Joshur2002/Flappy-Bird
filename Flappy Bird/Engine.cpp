@@ -50,8 +50,16 @@ Engine::Engine() {
 	is_collision = false;
 
 	X_Speed = X_SCROLL_SPEED;
+	score = 0;
 }
 
+/*
+input()
+	DESCRIPTION: Takes input from the kyeboard and raises the approriate flags in response.
+	INPUTS: n/a
+	RETURN: n/a
+	EFFECT: Sends signals that affect many functions, especially the update function for Flappy.
+*/
 void Engine::input() {
 	// exit
 	if (Keyboard::isKeyPressed(Keyboard::Escape))
@@ -66,10 +74,18 @@ void Engine::input() {
 		is_space_pressed = false;
 }
 
+/*
+update()
+	DESCRIPTION: Updates variables and their properites based off time elapsed.
+	INPUTS: dt_as_sec -- A float that acts as change in time (dt).
+	RETURN: n/a
+	EFFECT: Updates the variables' properties, such as position. movement, and visibility.
+*/
 void Engine::update(float dt_as_sec) {
 	// update where they are
 	Vector2f gnd1_position = gnd_sprite1.getPosition();
 	Vector2f gnd2_position = gnd_sprite2.getPosition();
+	Vector2f Flappy_position = Flappy.getFlappy_Position();
 
 	// ground scrolling logic
 	if (gnd1_position.x <= -SCREEN_RIGHT_BOUNDARY)
@@ -104,11 +120,26 @@ void Engine::update(float dt_as_sec) {
 			pipes[i].pipe_down_sprite.setPosition(pipe_down_position.x - X_Speed * dt_as_sec, pipe_down_position.y);
 			pipes[i].is_visible = false;
 		}
+		// score pipe logic
+		/*if (Flappy_position.x == pipes[i].pipe_up_sprite.getPosition().x && Flappy_position.y < pipes[i].pipe_up_sprite.getPosition().y) {
+			score++;
+			reset();
+		}*/
 	}
+
+
+
 	// update Flappy logic
 	Flappy.update(start_pressed, is_space_pressed, is_collision, dt_as_sec);
 }
 
+/*
+draw()
+	DESCRIPTION: Displays the various game entities onto the game screen.
+	INPUTS: n/a
+	RETURN: n/a
+	EFFECT: Shows objects on the game window.
+*/
 void Engine::draw() {
 	// draw from back to front
 	gameWindow.clear(Color::White);
@@ -127,6 +158,13 @@ void Engine::draw() {
 	gameWindow.display();
 }
 
+/*
+checkCollision()
+	DESCRIPTION:
+	INPUTS:
+	RETURN:
+	EFFECT:
+*/
 void Engine::checkCollision() {
 	// initialize
 	Vector2f Flappy_position = Flappy.getFlappy_Position();
@@ -137,13 +175,36 @@ void Engine::checkCollision() {
 		reset();
 	}
 
+	// pipes
+	for (int i = 0; i < NUM_PIPES; i++) {
+		if (Flappy_position.x >= pipes[i].pipe_up_sprite.getPosition().x + PIPE_LEFT_COLLISION_OFFSET && Flappy_position.x <= pipes[i].pipe_up_sprite.getPosition().x + PIPE_RIGHT_COLLISION_OFFSET && Flappy_position.y >= pipes[i].pipe_up_sprite.getPosition().y + PIPE_OPENING_COLLISION_OFFSET ||
+			Flappy_position.x >= pipes[i].pipe_down_sprite.getPosition().x + PIPE_LEFT_COLLISION_OFFSET && Flappy_position.x <= pipes[i].pipe_down_sprite.getPosition().x + PIPE_RIGHT_COLLISION_OFFSET && Flappy_position.y <= pipes[i].pipe_down_sprite.getPosition().y - PIPE_OPENING_COLLISION_OFFSET){
+			is_collision = true;
+			reset();
+		}
+	}
+
 }
 
-void Engine::score() {
-
+/*
+score()
+	DESCRIPTION:
+	INPUTS:
+	RETURN:
+	EFFECT:
+*/
+void Engine::scoreboard() {
+	//1234567++1234567;
 
 }
 
+/*
+reset()
+	DESCRIPTION:
+	INPUTS:
+	RETURN:
+	EFFECT:
+*/
 void Engine::reset() {
 	if (is_collision = true) {
 		// reset pipes
@@ -158,11 +219,21 @@ void Engine::reset() {
 		// reset Flappy
 		Flappy.update(start_pressed, is_space_pressed, is_collision, .001);
 
+		// reset score
+		score = 0;
+
 		// reset flags
 		is_collision = false;
 	}
 }
 
+/*
+start()
+	DESCRIPTION:
+	INPUTS:
+	RETURN:
+	EFFECT:
+*/
 void Engine::start() {
 	Clock clock;
 	float dt_in_sec;

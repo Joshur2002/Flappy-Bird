@@ -1,16 +1,19 @@
 #pragma once
 #include "Flappy.h"
 
-#define X_SCROLL_SPEED			350
-#define NUM_PIPES				5
-#define PIPE_LEFT_BOUNDARY		-1100
-#define PIPE_RIGHT_BOUNDARY		2900	// 3700 for 6 pipes w/ 800, 2100 for 4 pipes w/ 800
-#define PIPE_STARTING_POS_X		3000
-#define PIPE_OPENING			250
-#define PIPE_UP_OFFSET			340
-#define PIPE_UP_FLEXIBILITY		1200
-#define	PIPE_SPACING			800
-#define SCREEN_RIGHT_BOUNDARY	2880
+#define X_SCROLL_SPEED					350
+#define NUM_PIPES						5
+#define PIPE_LEFT_BOUNDARY				-1100
+#define PIPE_RIGHT_BOUNDARY				2900	// 3700 for 6 pipes w/ 800, 2100 for 4 pipes w/ 800
+#define PIPE_STARTING_POS_X				3000
+#define PIPE_OPENING					250
+#define PIPE_UP_OFFSET					340
+#define PIPE_UP_FLEXIBILITY				1200
+#define	PIPE_SPACING					800
+#define SCREEN_RIGHT_BOUNDARY			2880
+#define PIPE_LEFT_COLLISION_OFFSET	630
+#define PIPE_RIGHT_COLLISION_OFFSET	990
+#define PIPE_OPENING_COLLISION_OFFSET	40
 
 class Engine {
 private:
@@ -43,7 +46,7 @@ private:
 	void update(float dt_as_sec);
 	void draw();
 	void checkCollision();
-	void score();
+	void scoreboard();
 	void reset();
 
 	// flag
@@ -53,6 +56,7 @@ private:
 
 	// vars
 	float X_Speed;
+	int score;
 
 public:
 	// Constructor
