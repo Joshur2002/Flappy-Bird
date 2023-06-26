@@ -1,7 +1,9 @@
 #pragma once
 #include "Flappy.h"
+#include <vector>
+#include <algorithm>
 
-#define X_SCROLL_SPEED					350
+#define X_SCROLL_SPEED					350		// 350 base, 9950 is good for bug testing scoring
 #define NUM_PIPES						5
 #define PIPE_LEFT_BOUNDARY				-1100
 #define PIPE_RIGHT_BOUNDARY				2900	// 3700 for 6 pipes w/ 800, 2100 for 4 pipes w/ 800
@@ -11,8 +13,8 @@
 #define PIPE_UP_FLEXIBILITY				1200
 #define	PIPE_SPACING					800
 #define SCREEN_RIGHT_BOUNDARY			2880
-#define PIPE_LEFT_COLLISION_OFFSET	630
-#define PIPE_RIGHT_COLLISION_OFFSET	990
+#define PIPE_LEFT_COLLISION_OFFSET		630
+#define PIPE_RIGHT_COLLISION_OFFSET		990
 #define PIPE_OPENING_COLLISION_OFFSET	40
 
 class Engine {
@@ -53,7 +55,7 @@ private:
 	void draw();
 	void checkCollision();
 	void scoreboard();
-	bool closeEnough(float a, float b);
+	//bool closeEnough(float a, float b);
 	void reset();
 
 	// flag
@@ -61,6 +63,7 @@ private:
 	bool is_space_pressed;
 	bool is_collision;
 	bool updated_score;
+	bool god_mode;
 
 	// vars
 	float X_Speed;

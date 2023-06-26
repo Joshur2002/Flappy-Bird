@@ -1,6 +1,9 @@
 #include "Engine.h"
 
 Engine::Engine() {
+	// god mode
+	god_mode = false;
+
 	// window
 	Vector2f resolution;
 	resolution.x = VideoMode::getDesktopMode().width;	// 2880
@@ -138,15 +141,11 @@ void Engine::update(float dt_as_sec) {
 			pipes[i].is_visible = false;
 		}
 		// score pipe logic
-		if (pipes[i].pipe_up_sprite.getPosition().x < 990 && !pipes[i].passed) {
+		if (pipes[i].pipe_up_sprite.getPosition().x < PIPE_LEFT_COLLISION_OFFSET && !pipes[i].passed) {
 			score++;
 			pipes[i].passed = true;
 		}
-	
 	}
-
-
-
 	// update Flappy logic
 	Flappy.update(start_pressed, is_space_pressed, is_collision, dt_as_sec);
 }
@@ -199,20 +198,21 @@ void Engine::checkCollision() {
 	Vector2f Flappy_position = Flappy.getFlappy_Position();
 	
 	// ground
-	if (Flappy_position.y >= GROUND) {
-		is_collision = true;
-		reset();
-	}
-
-	// pipes
-	for (int i = 0; i < NUM_PIPES; i++) {
-		if (Flappy_position.x >= pipes[i].pipe_up_sprite.getPosition().x + PIPE_LEFT_COLLISION_OFFSET && Flappy_position.x <= pipes[i].pipe_up_sprite.getPosition().x + PIPE_RIGHT_COLLISION_OFFSET && Flappy_position.y >= pipes[i].pipe_up_sprite.getPosition().y + PIPE_OPENING_COLLISION_OFFSET ||
-			Flappy_position.x >= pipes[i].pipe_down_sprite.getPosition().x + PIPE_LEFT_COLLISION_OFFSET && Flappy_position.x <= pipes[i].pipe_down_sprite.getPosition().x + PIPE_RIGHT_COLLISION_OFFSET && Flappy_position.y <= pipes[i].pipe_down_sprite.getPosition().y - PIPE_OPENING_COLLISION_OFFSET) {
+	if (!god_mode) {
+		if (Flappy_position.y >= GROUND) {
 			is_collision = true;
 			reset();
 		}
-	}
 
+		// pipes
+		for (int i = 0; i < NUM_PIPES; i++) {
+			if (Flappy_position.x >= pipes[i].pipe_up_sprite.getPosition().x + PIPE_LEFT_COLLISION_OFFSET && Flappy_position.x <= pipes[i].pipe_up_sprite.getPosition().x + PIPE_RIGHT_COLLISION_OFFSET && Flappy_position.y >= pipes[i].pipe_up_sprite.getPosition().y + PIPE_OPENING_COLLISION_OFFSET ||
+				Flappy_position.x >= pipes[i].pipe_down_sprite.getPosition().x + PIPE_LEFT_COLLISION_OFFSET && Flappy_position.x <= pipes[i].pipe_down_sprite.getPosition().x + PIPE_RIGHT_COLLISION_OFFSET && Flappy_position.y <= pipes[i].pipe_down_sprite.getPosition().y - PIPE_OPENING_COLLISION_OFFSET) {
+				is_collision = true;
+				reset();
+			}
+		}
+	}
 }
 
 /*
@@ -226,7 +226,8 @@ void Engine::scoreboard() {
 	// initialize
 	int num_digits = 0;
 	int divisor = 1;
-	int result = 1;
+	int temp = 1;
+	int score_temp = 0;
 	which_textures.clear();
 	score_textures.clear();
 	score_sprites.clear();
@@ -237,17 +238,20 @@ void Engine::scoreboard() {
 		which_textures.push_back(0);
 	}
 	else {
-		while (result > 0) {
-			result = (score / divisor) % 10;
+		while (temp > 0 || score >= divisor) {
+			temp = (score / divisor) % 10;
 			// break early
-			if (result <= 0)
+			if (score_temp >= score)
 				break;
 			num_digits++;
+			score_temp += temp * divisor;
 			divisor *= 10;
-
-			which_textures.push_back(result);
+			which_textures.push_back(temp);
 		}
 	}
+	// flip texture vector
+	reverse(which_textures.begin(), which_textures.end());
+
 	// set up sprites
 	score_textures.resize(num_digits);
 	score_sprites.resize(num_digits);
@@ -258,18 +262,6 @@ void Engine::scoreboard() {
 		score_sprites[i].setScale(10.f, 10.f);
 		score_sprites[i].setPosition(score_position, 100);
 		score_position += 100;
-	}
-
-
-}
-
-bool Engine::closeEnough(float a, float b) {
-	float delta = 0.40;	// lower value -> higher precision; higher value -> lower precision
-	if (abs(a - b) < delta) {
-		return true;
-	}
-	else {
-		return false;
 	}
 }
 
