@@ -43,6 +43,7 @@ Engine::Engine() {
 		j += PIPE_SPACING;
 
 		pipes[i].is_visible = false;
+		pipes[i].passed = false;
 	}
 
 	textures_list = {	"Sprites/ascii_0.png",
@@ -121,6 +122,7 @@ void Engine::update(float dt_as_sec) {
 			pipes[i].pipe_up_sprite.setPosition(PIPE_RIGHT_BOUNDARY, (rand() % PIPE_UP_FLEXIBILITY) + PIPE_UP_OFFSET);
 			pipes[i].pipe_down_sprite.setPosition(PIPE_RIGHT_BOUNDARY, pipes[i].pipe_up_sprite.getPosition().y - PIPE_OPENING);
 			pipes[i].is_visible = false;
+			pipes[i].passed = false;
 		}
 		// on screen
 		else if (pipes[i].pipe_up_sprite.getPosition().x >= PIPE_LEFT_BOUNDARY && pipes[i].pipe_up_sprite.getPosition().x < SCREEN_RIGHT_BOUNDARY) {
@@ -136,18 +138,11 @@ void Engine::update(float dt_as_sec) {
 			pipes[i].is_visible = false;
 		}
 		// score pipe logic
-		//if (Flappy_position.x >= pipes[i].pipe_up_sprite.getPosition().x + PIPE_LEFT_COLLISION_OFFSET + 330 && Flappy_position.x <= pipes[i].pipe_up_sprite.getPosition().x + 992 && !updated_score) {
-
-		if (closeEnough(Flappy_position.x, pipes[i].pipe_up_sprite.getPosition().x) && !updated_score) {
-			// score has not been updated
-			/*if (!updated_score) {
-				score++;;
-				updated_score = true;
-			}*/
-  			score++;
-			updated_score = true;
+		if (pipes[i].pipe_up_sprite.getPosition().x < 990 && !pipes[i].passed) {
+			score++;
+			pipes[i].passed = true;
 		}
-		//updated_score = false;
+	
 	}
 
 

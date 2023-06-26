@@ -29,6 +29,7 @@ private:
 		Sprite pipe_up_sprite;		// refer to dir they face; up = thick part up; down = thick part down
 		Sprite pipe_down_sprite;
 		bool is_visible;
+		bool passed;
 	};
 
 	pipe_t pipes[6];
