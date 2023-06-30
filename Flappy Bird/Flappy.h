@@ -1,3 +1,7 @@
+
+#ifndef FLAPPY_H
+#define FLAPPY_H
+
 #pragma once
 #include "SFML/Graphics.hpp"
 
@@ -35,3 +39,5 @@ public:
 	// screen func
 	void update(bool start_key_pressed, bool is_space_pressed, bool is_collision, float time_elapsed);
 };
+
+#endif

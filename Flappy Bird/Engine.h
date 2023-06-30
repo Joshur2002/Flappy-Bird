@@ -1,7 +1,18 @@
+
+#ifndef ENGINE_H
+#define ENGINE_H
+
 #pragma once
+
 #include "Flappy.h"
 #include <vector>
 #include <algorithm>
+
+#include <unordered_map>
+//#include <vector>
+#include <tuple>
+#include <cmath>
+#include <functional>
 
 #define X_SCROLL_SPEED					350		// 350 base, 9950 is good for bug testing scoring
 #define NUM_PIPES						5
@@ -16,9 +27,41 @@
 #define PIPE_LEFT_COLLISION_OFFSET		630
 #define PIPE_RIGHT_COLLISION_OFFSET		990
 #define PIPE_OPENING_COLLISION_OFFSET	40
+#define BIG_NUMBER						2147483648 - 1
+
+//class AI
+
+// creates a unique hash for each key:value pair in the unordered map
+struct TupleHash {
+	template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
+	size_t operator()(const tuple<T1, T2, T3, T4, T5, T6, T7, T8>& tuple) const {
+		size_t seed = 0;
+		hash<T1> hasher1;
+		hash<T2> hasher2;
+		hash<T2> hasher3;
+		hash<T2> hasher4;
+		hash<T2> hasher5;
+		hash<T2> hasher6;
+		hash<T2> hasher7;
+		hash<T2> hasher8;
+		seed ^= hasher1(get<0>(tuple)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		seed ^= hasher2(get<1>(tuple)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		seed ^= hasher3(get<2>(tuple)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		seed ^= hasher4(get<3>(tuple)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		seed ^= hasher5(get<4>(tuple)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		seed ^= hasher6(get<5>(tuple)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		seed ^= hasher7(get<6>(tuple)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		seed ^= hasher8(get<7>(tuple)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		return seed;
+	}
+};
 
 class Engine {
 private:
+	// copy of constructor
+	Flappy Flappy;
+	//AI* AI;
+
 	// Render window
 	RenderWindow gameWindow;
 
@@ -46,8 +89,6 @@ private:
 	vector<Sprite> score_sprites;
 	vector<int> which_textures;
 
-	// copy of Flappy constructor
-	Flappy Flappy;
 
 	// func only for Engine
 	void input();
@@ -55,7 +96,7 @@ private:
 	void draw();
 	void checkCollision();
 	void scoreboard();
-	//bool closeEnough(float a, float b);
+	int closestPipe();
 	void reset();
 
 	// flag
@@ -69,10 +110,52 @@ private:
 	float X_Speed;
 	int score;
 
+
+
+	/*
+		0 -- Flappy_position.x
+		1 -- Flappy_position.y
+		2 -- Flappy_velocity.y
+		3 -- Pipe_Up_position.x
+		4 -- Pipe_Up_position.y
+		5 -- Pipe_Down_position.x
+		6 -- Pipe_Down_position.y
+		7 -- Action (flap/nothing)
+	*/
+	// Q value of that state/action pair
+	unordered_map<tuple<int, int, int, int, int, int, int, int>, float, TupleHash> Q_table;
+	// number of times that state/action pair has been explored
+	unordered_map<tuple<int, int, int, int, int, int, int, int>, int, TupleHash> N_table;
+
+	// main functions
+	void decide();
+
+	void reward();
+
+	void action();
+
+	void update();
+
+	// helper functions
+	tuple<int, int, vector<int>> getState();
+
+	int discretization(float a);
+	void epsilonGreedy();
+
+	// variables
+	float alpha;
+	float epsilon;
+
+
+
+
 public:
 	// Constructor
 	Engine();
 
 	// func for others too
 	void start();
+	vector<float> getPipes();
 };
+
+#endif

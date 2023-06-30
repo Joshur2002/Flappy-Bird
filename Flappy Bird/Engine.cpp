@@ -71,27 +71,6 @@ Engine::Engine() {
 }
 
 /*
-input()
-	DESCRIPTION: Takes input from the kyeboard and raises the approriate flags in response.
-	INPUTS: n/a
-	RETURN: n/a
-	EFFECT: Sends signals that affect many functions, especially the update function for Flappy.
-*/
-void Engine::input() {
-	// exit
-	if (Keyboard::isKeyPressed(Keyboard::Escape))
-		gameWindow.close();
-
-	// jump
-	if (Keyboard::isKeyPressed(Keyboard::Space)) {
-		start_pressed = true;
-		is_space_pressed = true;
-	}
-	else
-		is_space_pressed = false;
-}
-
-/*
 update()
 	DESCRIPTION: Updates variables and their properites based off time elapsed.
 	INPUTS: dt_as_sec -- A float that acts as change in time (dt).
@@ -103,6 +82,9 @@ void Engine::update(float dt_as_sec) {
 	Vector2f gnd1_position = gnd_sprite1.getPosition();
 	Vector2f gnd2_position = gnd_sprite2.getPosition();
 	Vector2f Flappy_position = Flappy.getFlappy_Position();
+
+	// update closest pipes
+	getPipes();
 
 	// ground scrolling logic
 	if (gnd1_position.x <= -SCREEN_RIGHT_BOUNDARY)
@@ -148,42 +130,9 @@ void Engine::update(float dt_as_sec) {
 	}
 	// update Flappy logic
 	Flappy.update(start_pressed, is_space_pressed, is_collision, dt_as_sec);
-}
 
-/*
-draw()
-	DESCRIPTION: Displays the various game entities onto the game screen.
-	INPUTS: n/a
-	RETURN: n/a
-	EFFECT: Shows objects on the game window.
-*/
-void Engine::draw() {
-	// draw from back to front
-	gameWindow.clear(Color::White);
-
-	//background
-	gameWindow.draw(bg_sprite);
-	
-	// pipes
-	for (int i = 0; i < NUM_PIPES; i++) {
-		if (pipes[i].is_visible == true) {
-			gameWindow.draw(pipes[i].pipe_up_sprite);
-			gameWindow.draw(pipes[i].pipe_down_sprite);
-		}
-	}
-	// ground
-	gameWindow.draw(gnd_sprite1);
-	gameWindow.draw(gnd_sprite2);
-
-	// scoreboard
-	scoreboard();
-	for (int i = 0; i < score_sprites.size(); i++) {
-		gameWindow.draw(score_sprites[i]);
-	}
-
-	// Flappy
-	gameWindow.draw(Flappy.getSprite());
-	gameWindow.display();
+	// check collisions
+	checkCollision();
 }
 
 /*
@@ -294,6 +243,142 @@ void Engine::reset() {
 	}
 }
 
+vector<float> Engine::getPipes() {
+	// initialize
+	int closest_pipe_index = closestPipe();
+	vector<float> pipes_vector;
+
+	pipes_vector.push_back(pipes[closest_pipe_index].pipe_down_sprite.getPosition().y);
+	pipes_vector.push_back(pipes[closest_pipe_index].pipe_down_sprite.getPosition().x);
+		
+	pipes_vector.push_back(pipes[closest_pipe_index].pipe_up_sprite.getPosition().y);
+	pipes_vector.push_back(pipes[closest_pipe_index].pipe_up_sprite.getPosition().x);
+
+	return pipes_vector;
+}
+
+int Engine::closestPipe() {
+	// initialize
+	int closest_pipe_index = 0;
+	float smallest_dist = BIG_NUMBER;
+	float cur_dist;
+	Vector2f Flappy_position = Flappy.getFlappy_Position();
+
+	for (int i = 0; i < NUM_PIPES; i++) {
+		cur_dist = pipes[i].pipe_up_sprite.getPosition().x + 990 - Flappy_position.x;
+
+		// seen closest pipe
+		if (cur_dist < smallest_dist && cur_dist >= 0) {
+			// update index and smallest dist
+			closest_pipe_index = i;
+			smallest_dist = cur_dist;
+		}
+	}
+	return closest_pipe_index;
+}
+
+/*
+decide()
+	DESCRIPTION: Decide what action to do based off state, Q-table, and N-table.
+	INPUTS:
+	RETURN:
+	EFFECT:
+*/
+void Engine::decide() {
+	// grab the current state of game
+	//tuple<int, int, int, int> state = getState();
+
+
+
+}
+
+void Engine::reward() {
+
+}
+
+void Engine::update() {
+
+}
+
+
+
+
+/*
+discreteization(a)
+	DESCRIPTION: Takes in a float value and converts it into something discrete.
+	INPUTS: a -- A float that will be converted through the function.
+	RETURN: An integer that resulted from the input's transformation.
+	EFFECT: Changed float to int.
+*/
+void Engine::epsilonGreedy() {
+
+}
+int Engine::discretization(float a) {
+	/*
+		Think of Riemann Sums for binSize. (might be wrong analogy).
+			The lower the value, the more divisions there are (a more accurate representation).
+			The higher the value, the more crude divisions there are (a less accurate representation).
+	*/
+	float binSize = 1.0f;
+	return static_cast<int>(floor(a / binSize));
+}
+
+/*
+getActions()
+	DESCRIPTION:
+	INPUTS:
+	RETURN:
+	EFFECT:
+*/
+tuple<int, int, vector<int>> Engine::getState() {
+	// initialize
+	Vector2f Flappy_position = Flappy.getFlappy_Position();
+	vector<float> Pipe_position = getPipes();
+
+	Vector2i Flappy_position_updated;
+	vector<int> Pipe_position_updated;
+	//Pipe_position_updated.resize(4);
+
+	// convert Flappy
+	Flappy_position_updated.x = discretization(Flappy_position.x);
+	Flappy_position_updated.y = discretization(Flappy_position.y);
+
+	// convert pipes
+	for (int i = 0; i < NUM_PIPES * 4; i++) {
+		Pipe_position_updated[i] = discretization(Pipe_position[i]);
+	}
+
+	return make_tuple(Flappy_position_updated.x, Flappy_position_updated.y, Pipe_position_updated);
+}
+
+//void Engine::reinforcementLearning() {
+//	decide();
+//	reward();
+//	update();
+//
+//}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
 start()
 	DESCRIPTION:
@@ -310,7 +395,8 @@ void Engine::start() {
 		dt_in_sec = dt.asSeconds();
 		input();
 		update(dt_in_sec);
-		checkCollision();
 		draw();
 	}
 }
+
+
