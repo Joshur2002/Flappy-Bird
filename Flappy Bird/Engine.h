@@ -157,6 +157,8 @@ private:
 	*/
 	vector<tuple<int, int, vector<int>, int>> saved_state_action;
 	float biggest_Q_value;
+	random_device rd;
+	mt19937 gen;
 
 public:
 	// Constructor

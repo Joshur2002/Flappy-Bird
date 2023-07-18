@@ -1,6 +1,6 @@
 #include "Engine.h"
 
-Engine::Engine() {
+Engine::Engine() : gen(rd()) {
 	// god mode
 	god_mode = false;
 
@@ -31,7 +31,7 @@ Engine::Engine() {
 	
 	float j = 0;
 	for (int i = 0; i < NUM_PIPES; i++) {
-		int random_d = getRandomInt(0, 100);
+		int random_d = getRandomInt(0, 5000);
 		pipes[i].pipe_up_sprite.setTexture(pipe_up_texture);
 		pipes[i].pipe_down_sprite.setTexture(pipe_down_texture);
 		pipes[i].pipe_up_sprite.setPosition(PIPE_STARTING_POS_X + j, (random_d % PIPE_UP_FLEXIBILITY) + PIPE_UP_OFFSET);
@@ -73,6 +73,9 @@ Engine::Engine() {
 	decay_factor = .95;
 	n_first_times = 10;
 	biggest_Q_value = 0.f;
+	/*static random_device rd;
+	static mt19937 gen(rd());*/
+	//gen(rd());
 }
 
 /*
@@ -107,7 +110,7 @@ void Engine::update(float dt_as_sec) {
 	for (int i = 0; i < NUM_PIPES; i++) {
 		Vector2f pipe_up_position = pipes[i].pipe_up_sprite.getPosition();
 		Vector2f pipe_down_position = pipes[i].pipe_down_sprite.getPosition();
-		int random_d = getRandomInt(0, 100);
+		int random_d = getRandomInt(0, 5000);
 
 		// left of screen
 		if (pipes[i].pipe_up_sprite.getPosition().x < PIPE_LEFT_BOUNDARY) {
@@ -235,12 +238,13 @@ void Engine::reset() {
 		// reset pipes
 		float j = 0;
 		for (int i = 0; i < NUM_PIPES; i++) {
-			int random_d = getRandomInt(0, 1);
+			int random_d = getRandomInt(0, 5000);
 			pipes[i].pipe_up_sprite.setPosition(PIPE_STARTING_POS_X + j, (random_d % PIPE_UP_FLEXIBILITY) + PIPE_UP_OFFSET);
 			pipes[i].pipe_down_sprite.setPosition(pipes[i].pipe_up_sprite.getPosition().x, pipes[i].pipe_up_sprite.getPosition().y - PIPE_OPENING);
 			j += PIPE_SPACING;
 
 			pipes[i].is_visible = false;
+			pipes[i].passed = false;
 		}
 		// reset Flappy
 		Flappy.update(start_pressed, is_space_pressed, is_collision, .001);
@@ -310,8 +314,8 @@ getRandomInt()
 	EFFECT: Is rng.
 */
 int Engine::getRandomInt(int min, int max) {
-	static std::random_device rd;
-	static std::mt19937 gen(rd());
+	/*static std::random_device rd;
+	static std::mt19937 gen(rd());*/
 	uniform_int_distribution<int> dist(min, max);
 	return dist(gen);
 }
@@ -325,8 +329,8 @@ getRandomFloat()
 	EFFECT: Is rng.
 */
 float Engine::getRandomFloat(float min, float max) {
-	static std::random_device rd;
-	static std::mt19937 gen(rd());
+	/*static std::random_device rd;
+	static std::mt19937 gen(rd());*/
 	std::uniform_real_distribution<float> dist(min, max);
 	return dist(gen);
 }
@@ -340,14 +344,21 @@ start()
 */
 void Engine::start() {
 	Clock clock;
+	Clock clock2;
 	float dt_in_sec;
+	float dt2_in_sec;
+	Time dt2 = clock2.restart();
+	dt2_in_sec = dt2.asSeconds();
 	// game running
 	while (gameWindow.isOpen()) {
 		Time dt = clock.restart();
 		dt_in_sec = dt.asSeconds();
 		input();
-		initialize();
-		action();
+		if (dt2_in_sec >= .5) {
+			initialize();
+			action();
+			dt2 = clock2.restart();
+		}
 		update(dt_in_sec);
 		draw();
 	}
