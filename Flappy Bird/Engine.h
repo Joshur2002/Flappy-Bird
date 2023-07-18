@@ -138,12 +138,15 @@ private:
 	int explore();
 	int exploit();
 	void checkBiggestQValue(tuple<int, int, vector<int>, int> state_action);
+	void updateNTable(tuple<int, int, vector<int>, int> state_action);
 	
 	void learn();
+	float calculateQLocal(float Q_value);
+	float updateQTable(float Q_value);
+
 
 	// helper functions
 	tuple<int, int, vector<int>> getState();
-
 	int discretization(float a);
 
 	// variables

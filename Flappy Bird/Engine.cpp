@@ -346,18 +346,29 @@ void Engine::start() {
 	Clock clock;
 	Clock clock2;
 	float dt_in_sec;
-	float dt2_in_sec;
+	float dt2_in_sec = 0.f;
 	Time dt2 = clock2.restart();
-	dt2_in_sec = dt2.asSeconds();
+
 	// game running
 	while (gameWindow.isOpen()) {
 		Time dt = clock.restart();
 		dt_in_sec = dt.asSeconds();
-		input();
-		if (dt2_in_sec >= .5) {
+		Time dt2_elapsed = clock2.getElapsedTime();
+		dt2_in_sec = dt2_elapsed.asSeconds();
+ 		input();
+		/*
+			TIME INTERVALS:
+				.25 -- ok
+				.50 -- ok
+				.10 -- might be ok
+				n/a -- NOT OK
+				.2 -- ok
+		*/
+		if (dt2_in_sec >= .2) {
 			initialize();
 			action();
 			dt2 = clock2.restart();
+			dt2_in_sec = 0.f;
 		}
 		update(dt_in_sec);
 		draw();
@@ -485,6 +496,8 @@ int Engine::explore() {
 		saved_state_action[0] = explore_list[getRandomInt(0, explore_list.size() - 1)];
 		action = get<3>(saved_state_action[0]);
 	}
+	// update N-table
+	updateNTable(saved_state_action[0]);
 
 	return action;
 }
@@ -504,6 +517,9 @@ int Engine::exploit() {
 	// choose from exploit section
 	saved_state_action[0] = saved_state_action[getRandomInt(1, saved_state_action.size() - 1)];
 	action = get<3>(saved_state_action[0]);
+
+	// update N-table 
+	updateNTable(saved_state_action[0]);
 
 	return action;
 }
@@ -531,19 +547,61 @@ void Engine::checkBiggestQValue(tuple<int, int, vector<int>, int> state_action) 
 	}
 }
 
+/*
+updateNTable()
+	DESCRIPTION:
+	INPUTS:
+	RETURN:
+	EFFECT:
+*/
+void Engine::updateNTable(tuple<int, int, vector<int>, int> state_action) {
+	// initialize
+	unordered_map<tuple<int, int, vector<int>, int>, int, TupleHash>::iterator it = N_table.find(state_action);
+
+	// update N-table value
+	if (it != N_table.end()) {
+		N_table[state_action] = it->second++;
+	}
+}
 
 
 
+/*
+learn()
+	DESCRIPTION: Updates the Q-value for the state/action pair with Q-learning algorithm.
+	INPUTS:	n/a
+	RETURN: n/a
+	EFFECT: Updates a Q-value in the Q-table.
 
-
-
-
-
-
-
+*/
 void Engine::learn() {
+	// initialize
+
+	// calculate Q_local
+
+	// calculate Q
+
+	// update Q_table
 
 }
+
+float calculateQLocal(float Q_value) {
+	return 0.;
+}
+float updateQTable(float Q_value) {
+	return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 
