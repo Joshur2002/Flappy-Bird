@@ -253,6 +253,13 @@ void Engine::reset() {
 	}
 }
 
+/*
+getPipes()
+	DESCRIPTION: Grabs information about the pipe closest to the front of Flappy.
+	INPUTS:	n/a
+	RETURN:	Vector<float> that contains the pipes' x and y values.
+	EFFECT: Makes new vector to be used.
+*/
 vector<float> Engine::getPipes() {
 	// initialize
 	int closest_pipe_index = closestPipe();
@@ -267,6 +274,13 @@ vector<float> Engine::getPipes() {
 	return pipes_vector;
 }
 
+/*
+closestPipe()
+	DESCRIPTION: Iterates through all pipes and finds the index of the closest pipe to the front of Flappy.
+	INPUTS:	n/a
+	RETURN:	Index value of the pipe.
+	EFFECT:	Finds the index of closest pipe.
+*/
 int Engine::closestPipe() {
 	// initialize
 	int closest_pipe_index = 0;
@@ -417,15 +431,18 @@ int Engine::explore() {
 	int action;
 	vector<tuple<int, int, vector<int>, int>> explore_list;
 	unordered_map<tuple<int, int, vector<int>, int>, int, TupleHash>::iterator state_action = N_table.begin();
+	unordered_map<tuple<int, int, vector<int>, int>, float, TupleHash>::iterator state_action_Q = Q_table.begin();
 
 	// get current game's state
 	tuple<int, int, vector<int>> state = getState();
 
+	// reset to allow new generation of biggest Q values
+	biggest_Q_value = 0;
+
 	// search for state/action pairs that have the 
-	for (state_action; state_action != N_table.end(); ++state_action) {
-		int flappy_y = get<1>(state);
+	for (state_action; state_action != N_table.end(); ++state_action, ++state_action_Q) {
+		//int flappy_y = get<1>(state);
 		int table_flappy_y = get<1>(*state_action);
-		int pipe_up_y = get<2>(state)[1];
 		/*
 			for some reason 
 				int table_pipe_up_y = get<2>(*state_action)[1]; <- doesnt work
@@ -436,10 +453,14 @@ int Engine::explore() {
 		vector<int> temp2 = get<2>(temp);
 		int table_pipe_up_y = temp2[1];
 
-		// explore if its been explored less than n_first_times && biased decision
-		if (state_action->second < n_first_times && flappy_y <= table_pipe_up_y + PIPE_OPENING_COLLISION_OFFSET) {
+		// explore if its been explored less than n_first_times && biased decision (based off table var. not actual)
+		if (state_action->second < n_first_times && table_flappy_y <= table_pipe_up_y + PIPE_OPENING_COLLISION_OFFSET) {
 			explore_list.push_back(state_action->first);
 		}
+
+		// check if state/action value is >= biggest seen Q-value
+		checkBiggestQValue(state_action_Q->first);
+
 	}
 	// in case of empty because of biased decisions
 	if (explore_list.empty()) {
@@ -452,18 +473,6 @@ int Engine::explore() {
 	else {
 		saved_state_action[0] = explore_list[getRandomInt(0, explore_list.size() - 1)];
 		action = get<3>(saved_state_action[0]);
-	}
-	// check if this state has the highest Q-value
-	if (Q_table[saved_state_action[0]] >= biggest_Q_value) {
-		// tie
-		saved_state_action.push_back(saved_state_action[0]);
-		
-		// biggest
-		if (Q_table[saved_state_action[0]] > biggest_Q_value) {
-			saved_state_action.erase(saved_state_action.begin() + 1, saved_state_action.end());
-			saved_state_action.push_back(saved_state_action[0]);
-			biggest_Q_value = Q_table[saved_state_action[0]];
-		}
 	}
 
 	return action;
@@ -488,6 +497,39 @@ int Engine::exploit() {
 
 	return action;
 }
+
+/*
+checkBiggestQValue()
+	DESCRIPTION: Checks the state/action pair from explore and compares its value to the record holder for 
+	INPUTS:
+	RETURN:
+	EFFECT:
+
+*/
+void Engine::checkBiggestQValue(tuple<int, int, vector<int>, int> state_action) {
+	// Q value from explore is bigger or equal
+	if (Q_table[state_action] >= biggest_Q_value) {
+		// tie
+		saved_state_action.push_back(state_action);
+
+		// biggest
+		if (Q_table[state_action] > biggest_Q_value) {
+			saved_state_action.erase(saved_state_action.begin() + 1, saved_state_action.end());
+			saved_state_action.push_back(state_action);
+			biggest_Q_value = Q_table[state_action];
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
 
 void Engine::learn() {
 

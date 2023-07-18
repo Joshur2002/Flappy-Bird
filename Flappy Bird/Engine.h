@@ -137,7 +137,8 @@ private:
 	int action();
 	int explore();
 	int exploit();
-
+	void checkBiggestQValue(tuple<int, int, vector<int>, int> state_action);
+	
 	void learn();
 
 	// helper functions
