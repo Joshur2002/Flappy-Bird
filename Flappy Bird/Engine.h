@@ -151,7 +151,7 @@ private:
 	float decay_factor;
 	int n_first_times;
 	/*
-		0 -- explore state
+		0 -- saved state/action pair
 		1 -- exploit state
 		2, 3, ... -- more exploits
 	*/

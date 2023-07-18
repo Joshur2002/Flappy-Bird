@@ -466,10 +466,10 @@ int Engine::explore() {
 	if (explore_list.empty()) {
 		explore_list.push_back(tuple_cat(state, make_tuple(0)));
 		explore_list.push_back(tuple_cat(state, make_tuple(1)));
-		saved_state_action[0] = explore_list[getRandomInt(0, 1)];
-		action = get<3>(saved_state_action[0]);
+		saved_state_action[0] = explore_list[getRandomInt(0, 1)];	// these two lines and the else are technically the same
+		action = get<3>(saved_state_action[0]);						// maybe clean up later
 	}
-	// choose at random
+	// not empty
 	else {
 		saved_state_action[0] = explore_list[getRandomInt(0, explore_list.size() - 1)];
 		action = get<3>(saved_state_action[0]);
@@ -488,12 +488,11 @@ exploit()
 */
 int Engine::exploit() {
 	// initialize
-	int action = 1;
-	vector<tuple<int, int, vector<int>, int>> explore_list;
+	int action;
 
-	unordered_map<tuple<int, int, vector<int>, int>, float, TupleHash>::iterator state_action = Q_table.begin();
-
-	// there is no state with the biggest
+	// choose from exploit section
+	saved_state_action[0] = saved_state_action[getRandomInt(1, saved_state_action.size() - 1)];
+	action = get<3>(saved_state_action[0]);
 
 	return action;
 }
@@ -501,9 +500,9 @@ int Engine::exploit() {
 /*
 checkBiggestQValue()
 	DESCRIPTION: Checks the state/action pair from explore and compares its value to the record holder for 
-	INPUTS:
-	RETURN:
-	EFFECT:
+	INPUTS:	state_action -- Key from Q_table.
+	RETURN: n/a
+	EFFECT: Adds to existing vector if a tie value, clear and add if greater than, or does nothing.
 
 */
 void Engine::checkBiggestQValue(tuple<int, int, vector<int>, int> state_action) {
