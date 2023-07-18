@@ -31,9 +31,10 @@ Engine::Engine() {
 	
 	float j = 0;
 	for (int i = 0; i < NUM_PIPES; i++) {
+		int random_d = getRandomInt(0, 100);
 		pipes[i].pipe_up_sprite.setTexture(pipe_up_texture);
 		pipes[i].pipe_down_sprite.setTexture(pipe_down_texture);
-		pipes[i].pipe_up_sprite.setPosition(PIPE_STARTING_POS_X + j, (rand() % PIPE_UP_FLEXIBILITY) + PIPE_UP_OFFSET);
+		pipes[i].pipe_up_sprite.setPosition(PIPE_STARTING_POS_X + j, (random_d % PIPE_UP_FLEXIBILITY) + PIPE_UP_OFFSET);
 		
 		// adjust pipe_down's prop.
 		Vector2u pipe_down_dim = pipe_down_texture.getSize();
@@ -68,6 +69,10 @@ Engine::Engine() {
 
 	X_Speed = X_SCROLL_SPEED;
 	score = 0;
+	epsilon = 0.8;
+	decay_factor = .95;
+	n_first_times = 10;
+	biggest_Q_value = 0.f;
 }
 
 /*
@@ -102,9 +107,11 @@ void Engine::update(float dt_as_sec) {
 	for (int i = 0; i < NUM_PIPES; i++) {
 		Vector2f pipe_up_position = pipes[i].pipe_up_sprite.getPosition();
 		Vector2f pipe_down_position = pipes[i].pipe_down_sprite.getPosition();
+		int random_d = getRandomInt(0, 100);
+
 		// left of screen
 		if (pipes[i].pipe_up_sprite.getPosition().x < PIPE_LEFT_BOUNDARY) {
-			pipes[i].pipe_up_sprite.setPosition(PIPE_RIGHT_BOUNDARY, (rand() % PIPE_UP_FLEXIBILITY) + PIPE_UP_OFFSET);
+			pipes[i].pipe_up_sprite.setPosition(PIPE_RIGHT_BOUNDARY, (random_d % PIPE_UP_FLEXIBILITY) + PIPE_UP_OFFSET);
 			pipes[i].pipe_down_sprite.setPosition(PIPE_RIGHT_BOUNDARY, pipes[i].pipe_up_sprite.getPosition().y - PIPE_OPENING);
 			pipes[i].is_visible = false;
 			pipes[i].passed = false;
@@ -127,6 +134,8 @@ void Engine::update(float dt_as_sec) {
 			score++;
 			pipes[i].passed = true;
 		}
+
+
 	}
 	// update Flappy logic
 	Flappy.update(start_pressed, is_space_pressed, is_collision, dt_as_sec);
@@ -226,7 +235,8 @@ void Engine::reset() {
 		// reset pipes
 		float j = 0;
 		for (int i = 0; i < NUM_PIPES; i++) {
-			pipes[i].pipe_up_sprite.setPosition(PIPE_STARTING_POS_X + j, (rand() % PIPE_UP_FLEXIBILITY) + PIPE_UP_OFFSET);
+			int random_d = getRandomInt(0, 1);
+			pipes[i].pipe_up_sprite.setPosition(PIPE_STARTING_POS_X + j, (random_d % PIPE_UP_FLEXIBILITY) + PIPE_UP_OFFSET);
 			pipes[i].pipe_down_sprite.setPosition(pipes[i].pipe_up_sprite.getPosition().x, pipes[i].pipe_up_sprite.getPosition().y - PIPE_OPENING);
 			j += PIPE_SPACING;
 
@@ -248,11 +258,11 @@ vector<float> Engine::getPipes() {
 	int closest_pipe_index = closestPipe();
 	vector<float> pipes_vector;
 
-	pipes_vector.push_back(pipes[closest_pipe_index].pipe_down_sprite.getPosition().y);
-	pipes_vector.push_back(pipes[closest_pipe_index].pipe_down_sprite.getPosition().x);
-		
-	pipes_vector.push_back(pipes[closest_pipe_index].pipe_up_sprite.getPosition().y);
 	pipes_vector.push_back(pipes[closest_pipe_index].pipe_up_sprite.getPosition().x);
+	pipes_vector.push_back(pipes[closest_pipe_index].pipe_up_sprite.getPosition().y);
+
+	pipes_vector.push_back(pipes[closest_pipe_index].pipe_down_sprite.getPosition().x);
+	pipes_vector.push_back(pipes[closest_pipe_index].pipe_down_sprite.getPosition().y);
 
 	return pipes_vector;
 }
@@ -278,106 +288,34 @@ int Engine::closestPipe() {
 }
 
 /*
-decide()
-	DESCRIPTION: Decide what action to do based off state, Q-table, and N-table.
-	INPUTS:
-	RETURN:
-	EFFECT:
+getRandomInt()
+	DESCRIPTION: Seeds and calculates a random int.
+	INPUTS:	min -- Lower bound of rng.
+			max -- Higher bound of rng.
+	RETURN: Random int.
+	EFFECT: Is rng.
 */
-void Engine::decide() {
-	// grab the current state of game
-	//tuple<int, int, int, int> state = getState();
-
-
-
-}
-
-void Engine::reward() {
-
-}
-
-void Engine::update() {
-
-}
-
-
-
-
-/*
-discreteization(a)
-	DESCRIPTION: Takes in a float value and converts it into something discrete.
-	INPUTS: a -- A float that will be converted through the function.
-	RETURN: An integer that resulted from the input's transformation.
-	EFFECT: Changed float to int.
-*/
-void Engine::epsilonGreedy() {
-
-}
-int Engine::discretization(float a) {
-	/*
-		Think of Riemann Sums for binSize. (might be wrong analogy).
-			The lower the value, the more divisions there are (a more accurate representation).
-			The higher the value, the more crude divisions there are (a less accurate representation).
-	*/
-	float binSize = 1.0f;
-	return static_cast<int>(floor(a / binSize));
+int Engine::getRandomInt(int min, int max) {
+	static std::random_device rd;
+	static std::mt19937 gen(rd());
+	uniform_int_distribution<int> dist(min, max);
+	return dist(gen);
 }
 
 /*
-getActions()
-	DESCRIPTION:
-	INPUTS:
-	RETURN:
-	EFFECT:
+getRandomFloat()
+	DESCRIPTION: Seeds and calculates a random float.
+	INPUTS:	min -- Lower bound of rng.
+			max -- Higher bound of rng.
+	RETURN: Random float.
+	EFFECT: Is rng.
 */
-tuple<int, int, vector<int>> Engine::getState() {
-	// initialize
-	Vector2f Flappy_position = Flappy.getFlappy_Position();
-	vector<float> Pipe_position = getPipes();
-
-	Vector2i Flappy_position_updated;
-	vector<int> Pipe_position_updated;
-	//Pipe_position_updated.resize(4);
-
-	// convert Flappy
-	Flappy_position_updated.x = discretization(Flappy_position.x);
-	Flappy_position_updated.y = discretization(Flappy_position.y);
-
-	// convert pipes
-	for (int i = 0; i < NUM_PIPES * 4; i++) {
-		Pipe_position_updated[i] = discretization(Pipe_position[i]);
-	}
-
-	return make_tuple(Flappy_position_updated.x, Flappy_position_updated.y, Pipe_position_updated);
+float Engine::getRandomFloat(float min, float max) {
+	static std::random_device rd;
+	static std::mt19937 gen(rd());
+	std::uniform_real_distribution<float> dist(min, max);
+	return dist(gen);
 }
-
-//void Engine::reinforcementLearning() {
-//	decide();
-//	reward();
-//	update();
-//
-//}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /*
 start()
@@ -394,9 +332,215 @@ void Engine::start() {
 		Time dt = clock.restart();
 		dt_in_sec = dt.asSeconds();
 		input();
+		initialize();
+		action();
 		update(dt_in_sec);
 		draw();
 	}
 }
+
+// ---------------------------------------------------------------- AI ------------------------------------------------------------
+
+/*
+initialize()
+	DESCRIPTION: Checks if the current game's state/action pair is in the tables. If not, it'll add it initialized to zero.
+	INPUTS: n/a
+	RETURN: n/a
+	EFFECT: Could insert new key:value pair into Q_table and N_table.
+*/
+void Engine::initialize() {
+	// add the current state/action into the tables if not done so already
+	tuple<int, int, vector<int>> state = getState();
+
+	// since both unordered maps are uninitialized (empty), only one is needed to check whether it's been "seen" before
+	tuple<int, int, vector<int>, int> state_no_flap = tuple_cat(state, make_tuple(0));
+	tuple<int, int, vector<int>, int> state_flap = tuple_cat(state, make_tuple(1));
+
+	// check if either are already in the map
+	unordered_map<tuple<int, int, vector<int>, int>, float, TupleHash>::iterator state_action = Q_table.find(state_no_flap);
+
+	// not in Q_table/N-table
+	if (state_action == Q_table.end()) {
+		Q_table.emplace(state_no_flap, 0.f);
+		Q_table.emplace(state_flap, 0.f);
+		N_table.emplace(state_no_flap, 0);
+		N_table.emplace(state_flap, 0);
+	}
+
+	// make the saved_state_action not empty
+	if (saved_state_action.empty()) {
+		saved_state_action.push_back(state_no_flap);
+		saved_state_action.push_back(state_no_flap);
+	}
+}
+
+/*
+action()
+	DESCRIPTION: Decides whether the model should explore, exploit, or choose at random, and then chooses an action.
+	INPUTS:	n/a
+	RETURN: An int that decides the action.
+	EFFECT: Decides an action.
+*/
+int Engine::action() {
+	// initialize
+	tuple<int, int, vector<int>, int> state_action;
+	int action;
+
+	//	get random prob between 0 and 1
+	float random_prob = getRandomFloat(0, 1);
+
+	// explore
+	if (random_prob < epsilon) {
+		action = explore();
+	}
+	// exploit
+	else {
+		action = exploit();
+	}
+	// decay
+	if (epsilon > .15)
+		epsilon *= .99;
+	
+	return action;
+}
+
+/*
+explore()
+	DESCRIPTION: Explores new state/actions to potentially expand its "view".
+	INPUTS:	n/a
+	RETURN: 0 -- No flap.
+			1 -- Flap.
+	EFFECT:	Sends an action signal back to action().
+*/
+int Engine::explore() {
+	// initialize
+	int action;
+	vector<tuple<int, int, vector<int>, int>> explore_list;
+	unordered_map<tuple<int, int, vector<int>, int>, int, TupleHash>::iterator state_action = N_table.begin();
+
+	// get current game's state
+	tuple<int, int, vector<int>> state = getState();
+
+	// search for state/action pairs that have the 
+	for (state_action; state_action != N_table.end(); ++state_action) {
+		int flappy_y = get<1>(state);
+		int table_flappy_y = get<1>(*state_action);
+		int pipe_up_y = get<2>(state)[1];
+		/*
+			for some reason 
+				int table_pipe_up_y = get<2>(*state_action)[1]; <- doesnt work
+
+			Below is the jank work around
+		*/
+		tuple<int, int, vector<int>, int> temp = state_action->first;
+		vector<int> temp2 = get<2>(temp);
+		int table_pipe_up_y = temp2[1];
+
+		// explore if its been explored less than n_first_times && biased decision
+		if (state_action->second < n_first_times && flappy_y <= table_pipe_up_y + PIPE_OPENING_COLLISION_OFFSET) {
+			explore_list.push_back(state_action->first);
+		}
+	}
+	// in case of empty because of biased decisions
+	if (explore_list.empty()) {
+		explore_list.push_back(tuple_cat(state, make_tuple(0)));
+		explore_list.push_back(tuple_cat(state, make_tuple(1)));
+		saved_state_action[0] = explore_list[getRandomInt(0, 1)];
+		action = get<3>(saved_state_action[0]);
+	}
+	// choose at random
+	else {
+		saved_state_action[0] = explore_list[getRandomInt(0, explore_list.size() - 1)];
+		action = get<3>(saved_state_action[0]);
+	}
+	// check if this state has the highest Q-value
+	if (Q_table[saved_state_action[0]] >= biggest_Q_value) {
+		// tie
+		saved_state_action.push_back(saved_state_action[0]);
+		
+		// biggest
+		if (Q_table[saved_state_action[0]] > biggest_Q_value) {
+			saved_state_action.erase(saved_state_action.begin() + 1, saved_state_action.end());
+			saved_state_action.push_back(saved_state_action[0]);
+			biggest_Q_value = Q_table[saved_state_action[0]];
+		}
+	}
+
+	return action;
+}
+
+/* 
+exploit()
+	DESCRIPTION: Finds the state/action with the highest Q-value and returns the action.
+	INPUTS: n/a
+	RETURN: 0 -- No flap.
+			1 -- Flap.
+	EFFECT:	Sends an action signal back to action().
+*/
+int Engine::exploit() {
+	// initialize
+	int action = 1;
+	vector<tuple<int, int, vector<int>, int>> explore_list;
+
+	unordered_map<tuple<int, int, vector<int>, int>, float, TupleHash>::iterator state_action = Q_table.begin();
+
+	// there is no state with the biggest
+
+	return action;
+}
+
+void Engine::learn() {
+
+}
+
+
+
+
+/*
+discretization()
+	DESCRIPTION: Takes in a float value and converts it into a discretable value.
+	INPUTS: a -- Float that will be converted into a discrete value.
+	RETURN: An int that was the result of a conversion of the input.
+	EFFECT: Converts float to int.
+*/
+int Engine::discretization(float a) {
+	/*
+		Think of Riemann Sums for binSize. (might be wrong analogy).
+			The lower the value, the more divisions there are (a more accurate representation).
+			The higher the value, the more crude divisions there are (a less accurate representation).
+	*/
+	float binSize = 1.0f;
+	return static_cast<int>(floor(a / binSize));
+}
+
+/*
+getState()
+	DESCRIPTION: Gets the game's current state.
+	INPUTS: n/a
+	RETURN: Tuple in the form of (int, int, vector<int>).
+	EFFECT: Makes a tuple.
+*/
+tuple<int, int, vector<int>> Engine::getState() {
+	// initialize
+	Vector2f Flappy_position = Flappy.getFlappy_Position();
+	vector<float> Pipe_position = getPipes();
+
+	Vector2i Flappy_position_updated;
+	vector<int> Pipe_position_updated;
+	//Pipe_position_updated.resize(4);
+
+	// convert Flappy
+	Flappy_position_updated.x = discretization(Flappy_position.x);
+	Flappy_position_updated.y = discretization(Flappy_position.y);
+
+	// convert pipes
+	for (vector<float>::iterator it = Pipe_position.begin(); it != Pipe_position.end(); ++it) {
+		Pipe_position_updated.push_back(discretization(*it));
+	}
+	
+	return make_tuple(Flappy_position_updated.x, Flappy_position_updated.y, Pipe_position_updated);
+}
+
+
 
 

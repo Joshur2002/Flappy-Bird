@@ -9,10 +9,12 @@
 #include <algorithm>
 
 #include <unordered_map>
-//#include <vector>
 #include <tuple>
 #include <cmath>
+#include <iterator>
 #include <functional>
+#include <random>
+
 
 #define X_SCROLL_SPEED					350		// 350 base, 9950 is good for bug testing scoring
 #define NUM_PIPES						5
@@ -33,25 +35,24 @@
 
 // creates a unique hash for each key:value pair in the unordered map
 struct TupleHash {
-	template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
-	size_t operator()(const tuple<T1, T2, T3, T4, T5, T6, T7, T8>& tuple) const {
+	template <typename T1, typename T2, typename T3, typename T4>
+	size_t operator()(const tuple<T1, T2, vector<T3>, T4>& tuple) const {
 		size_t seed = 0;
 		hash<T1> hasher1;
 		hash<T2> hasher2;
 		hash<T2> hasher3;
-		hash<T2> hasher4;
-		hash<T2> hasher5;
-		hash<T2> hasher6;
-		hash<T2> hasher7;
-		hash<T2> hasher8;
+		hash<T3> hasher4;
 		seed ^= hasher1(get<0>(tuple)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 		seed ^= hasher2(get<1>(tuple)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-		seed ^= hasher3(get<2>(tuple)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+
+		const auto& vec = std::get<2>(tuple);
+		for (const auto& element : vec) {
+			seed ^= hasher3(element) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		}
+
 		seed ^= hasher4(get<3>(tuple)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-		seed ^= hasher5(get<4>(tuple)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-		seed ^= hasher6(get<5>(tuple)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-		seed ^= hasher7(get<6>(tuple)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-		seed ^= hasher8(get<7>(tuple)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+
+		//seed ^= hasher3(get<2>(tuple)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 		return seed;
 	}
 };
@@ -99,6 +100,9 @@ private:
 	int closestPipe();
 	void reset();
 
+	int getRandomInt(int min, int max);
+	float getRandomFloat(float min, float max);
+
 	// flag
 	bool start_pressed;
 	bool is_space_pressed;
@@ -110,44 +114,48 @@ private:
 	float X_Speed;
 	int score;
 
-
+	// -------------------------------------- AI -----------------------------------------------
 
 	/*
 		0 -- Flappy_position.x
 		1 -- Flappy_position.y
-		2 -- Flappy_velocity.y
-		3 -- Pipe_Up_position.x
-		4 -- Pipe_Up_position.y
-		5 -- Pipe_Down_position.x
-		6 -- Pipe_Down_position.y
-		7 -- Action (flap/nothing)
+		2 -- Pipe_Up_position.x
+		3 -- Pipe_Up_position.y
+		4 -- Pipe_Down_position.x
+		5 -- Pipe_Down_position.y
+		6 -- Action (flap/nothing)
 	*/
 	// Q value of that state/action pair
-	unordered_map<tuple<int, int, int, int, int, int, int, int>, float, TupleHash> Q_table;
+	unordered_map<tuple<int, int, vector<int>, int>, float, TupleHash> Q_table;
+
 	// number of times that state/action pair has been explored
-	unordered_map<tuple<int, int, int, int, int, int, int, int>, int, TupleHash> N_table;
+	unordered_map<tuple<int, int, vector<int>, int>, int, TupleHash> N_table;
 
-	// main functions
-	void decide();
+	// main functions & their helpers
+	void initialize();
 
-	void reward();
+	int action();
+	int explore();
+	int exploit();
 
-	void action();
-
-	void update();
+	void learn();
 
 	// helper functions
 	tuple<int, int, vector<int>> getState();
 
 	int discretization(float a);
-	void epsilonGreedy();
 
 	// variables
-	float alpha;
 	float epsilon;
-
-
-
+	float decay_factor;
+	int n_first_times;
+	/*
+		0 -- explore state
+		1 -- exploit state
+		2, 3, ... -- more exploits
+	*/
+	vector<tuple<int, int, vector<int>, int>> saved_state_action;
+	float biggest_Q_value;
 
 public:
 	// Constructor
