@@ -32,6 +32,7 @@ public:
 
 	// FLappy func
 	Vector2f getFlappy_Position();
+	Vector2f getFlappy_Velocity();
 
 	// visual func
 	Sprite getSprite();

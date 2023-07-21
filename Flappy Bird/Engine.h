@@ -92,7 +92,7 @@ private:
 
 
 	// func only for Engine
-	void input();
+	void input(int action);
 	void update(float dt_as_sec);
 	void draw();
 	void checkCollision();
@@ -138,11 +138,11 @@ private:
 	int explore();
 	int exploit();
 	void checkBiggestQValue(tuple<int, int, vector<int>, int> state_action);
-	void updateNTable(tuple<int, int, vector<int>, int> state_action);
 	
-	void learn();
-	float calculateQLocal(float Q_value);
-	float updateQTable(float Q_value);
+	void learn(float dt_in_sec);
+	float calculateQLocal(tuple<int, int, vector<int>, int> state_action, float time_elapsed);
+	float updateQTable(tuple<int, int, vector<int>, int> state_action);
+	int updateNTable(tuple<int, int, vector<int>, int> state_action);
 
 
 	// helper functions

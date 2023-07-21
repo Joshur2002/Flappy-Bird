@@ -22,6 +22,10 @@ Vector2f Flappy::getFlappy_Position() {
 	return Flappy_position;
 }
 
+Vector2f Flappy::getFlappy_Velocity() {
+	return Flappy_velocity;
+}
+
 Sprite Flappy::getSprite() {
 	return Flappy_sprite;
 }
