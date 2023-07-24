@@ -114,6 +114,7 @@ private:
 	// vars
 	float X_Speed;
 	int score;
+	int score_old;
 
 	// -------------------------------------- AI -----------------------------------------------
 
@@ -135,16 +136,18 @@ private:
 	// main functions & their helpers
 	void initialize();
 
-	int action();
-	int explore();
+	int action(float time_elapsed);
+	int explore(float time_elapsed);
 	int exploit();
 	void checkBiggestQValue(tuple<int, int, vector<int>, int> state_action);
 	
 	void learn(float dt_in_sec);
 	float calculateQLocal(tuple<int, int, vector<int>, int> state_action, float time_elapsed);
 	float calculateReward();
-	float updateQTable(tuple<int, int, vector<int>, int> state_action);
-	int updateNTable(tuple<int, int, vector<int>, int> state_action);
+	void updateQTable(tuple<int, int, vector<int>, int> state_action, float Q_new);
+	void updateNTable(tuple<int, int, vector<int>, int> state_action);
+
+	tuple<int, int, vector<int>> calculateNextState(tuple<int, int, vector<int>, int> state_action, float time_elapsed);
 
 
 	// helper functions
@@ -155,7 +158,9 @@ private:
 	float epsilon;
 	float decay_factor;
 	float discount_factor;
+	float learning_rate;
 	int n_first_times;
+	float algorithm_freq;
 	/*
 		0 -- saved state/action pair
 		1 -- exploit state

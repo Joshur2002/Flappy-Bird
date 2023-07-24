@@ -70,10 +70,15 @@ Engine::Engine() : gen(rd()) {
 
 	X_Speed = X_SCROLL_SPEED;
 	score = 0;
-	epsilon = 0.8;
-	decay_factor = .95;
-	discount_factor = .9;
-	n_first_times = 10;
+	score_old = 0;
+
+	epsilon = 0.80;				//	.80
+	decay_factor = .90;			//	.95
+	discount_factor = .80;		//	.90
+	learning_rate = .20;		//	.10
+	n_first_times = 1;			//	10
+	algorithm_freq = .25;
+	
 	biggest_Q_value = 0.f;
 
 }
@@ -153,10 +158,10 @@ void Engine::update(float dt_as_sec) {
 
 /*
 checkCollision()
-	DESCRIPTION:
-	INPUTS:
-	RETURN:
-	EFFECT:
+	DESCRIPTION: If god_mode is off, it will check if Flappy has collided with any of the pipes. If it did, it will switch a flag to high.
+	INPUTS: n/a
+	RETURN: n/a
+	EFFECT: Switches a collision flag to high that will affect update and reset.
 */
 void Engine::checkCollision() {
 	// initialize
@@ -255,6 +260,7 @@ void Engine::reset() {
 
 		// reset score
 		score = 0;
+		score_old = 0;
 
 		// reset flags
 		is_collision = false;
@@ -367,9 +373,9 @@ void Engine::start() {
 				n/a -- NOT OK
 				.2 -- ok
 		*/
-		if (dt2_in_sec >= .2) {
+		if (dt2_in_sec >= algorithm_freq) {
 			initialize();
-			action();
+			action(dt_in_sec);
 			learn(dt_in_sec);
 			dt2 = clock2.restart();
 			dt2_in_sec = 0.f;
@@ -411,8 +417,8 @@ void Engine::initialize() {
 
 	// make the saved_state_action not empty
 	if (saved_state_action.empty()) {
-		saved_state_action.push_back(state_no_flap);
-		saved_state_action.push_back(state_no_flap);
+		saved_state_action.push_back(state_flap);
+		saved_state_action.push_back(state_flap);
 	}
 }
 
@@ -423,7 +429,7 @@ action()
 	RETURN: An int that decides the action.
 	EFFECT: Decides an action.
 */
-int Engine::action() {
+int Engine::action(float time_elapsed) {
 	// initialize
 	tuple<int, int, vector<int>, int> state_action;
 	int action;
@@ -433,15 +439,15 @@ int Engine::action() {
 
 	// explore
 	if (random_prob < epsilon) {
-		action = explore();
+		action = explore(time_elapsed);
 	}
 	// exploit
 	else {
 		action = exploit();
 	}
 	// decay
-	if (epsilon > .15)
-		epsilon *= .99;
+	if (Q_table.size() > 2500 && epsilon > .05)		// adjust rhis JOSH delete after changing
+		epsilon *= decay_factor;
 
 	input(action);
 
@@ -456,7 +462,7 @@ explore()
 			1 -- Flap.
 	EFFECT:	Sends an action signal back to action().
 */
-int Engine::explore() {
+int Engine::explore(float time_elapsed) {
 	// initialize
 	int action;
 	vector<tuple<int, int, vector<int>, int>> explore_list;
@@ -484,7 +490,7 @@ int Engine::explore() {
 		int table_pipe_up_y = temp2[1];
 
 		// explore if its been explored less than n_first_times && biased decision (based off table var. not actual)
-		if (state_action->second < n_first_times && table_flappy_y <= table_pipe_up_y + PIPE_OPENING_COLLISION_OFFSET) {
+		if (state_action->second < n_first_times/* && table_flappy_y <= table_pipe_up_y + PIPE_OPENING_COLLISION_OFFSET*/) {
 			explore_list.push_back(state_action->first);
 		}
 
@@ -492,10 +498,11 @@ int Engine::explore() {
 		checkBiggestQValue(state_action_Q->first);
 
 	}
-	// in case of empty because of biased decisions
+	// empty because biased
 	if (explore_list.empty()) {
-		explore_list.push_back(tuple_cat(state, make_tuple(0)));
-		explore_list.push_back(tuple_cat(state, make_tuple(1)));
+		tuple<int, int, vector<int>> next_state = calculateNextState(tuple_cat(state, make_tuple(getRandomInt(0, 1))), time_elapsed);
+		explore_list.push_back(tuple_cat(next_state, make_tuple(0)));
+		explore_list.push_back(tuple_cat(next_state, make_tuple(1)));
 		saved_state_action[0] = explore_list[getRandomInt(0, 1)];	// these two lines and the else are technically the same
 		action = get<3>(saved_state_action[0]);						// maybe clean up later
 	}
@@ -550,42 +557,14 @@ void Engine::checkBiggestQValue(tuple<int, int, vector<int>, int> state_action) 
 	}
 }
 
-/*
-learn()
-	DESCRIPTION: Updates the Q-value for the state/action pair with Q-learning algorithm.
-	INPUTS:	n/a
-	RETURN: n/a
-	EFFECT: Updates a Q-value in the Q-table.
-
-*/
-void Engine::learn(float dt_in_sec) {
-	// initialize
-	int action = get<3>(saved_state_action[0]);
-	tuple <int, int, vector<int>, int> state_action = saved_state_action[0];
-
-	// calculate Q_local
-	float Q_local = calculateQLocal(state_action, dt_in_sec);
-
-
-	// calculate Q
-
-
-
-	// update Q_table & N_table
-
-
-
-}
-
-float Engine::calculateQLocal(tuple<int, int, vector<int>, int> state_action, float time_elapsed) {
+tuple<int, int, vector<int>> Engine::calculateNextState(tuple<int, int, vector<int>, int> state_action, float time_elapsed) {
 	// initialize
 	tuple<int, int, vector<int>> next_state = make_tuple(get<0>(state_action), get<1>(state_action), get<2>(state_action));
-	float Q_local = 0.f;
 	Vector2f Flappy_position = Flappy.getFlappy_Position();
 	Vector2f Flappy_velocity = Flappy.getFlappy_Velocity();
 	Vector2i pipe_up_position = { get<2>(next_state)[0], get<2>(next_state)[1] };
 	Vector2i pipe_down_position = { get<2>(next_state)[2], get<2>(next_state)[3] };
-	
+
 	// update flappy's y
 	if (get<3>(state_action) != 1) {
 		get<1>(next_state) = Flappy_position.y + (time_elapsed * Flappy_velocity.y) + (.5 * GRAVITY * time_elapsed * time_elapsed);
@@ -597,6 +576,44 @@ float Engine::calculateQLocal(tuple<int, int, vector<int>, int> state_action, fl
 	// update pipes' x
 	get<2>(next_state)[0] = pipe_up_position.x - X_Speed * time_elapsed;
 	get<2>(next_state)[2] = pipe_down_position.x - X_Speed * time_elapsed;
+
+	return next_state;
+}
+
+
+/*
+learn()
+	DESCRIPTION: Updates the Q-value for the state/action pair with Q-learning algorithm.
+	INPUTS:	n/a
+	RETURN: n/a
+	EFFECT: Updates a Q-value in the Q-table.
+
+*/
+void Engine::learn(float dt_in_sec) {
+	// initialize
+	float Q_new;
+	int action = get<3>(saved_state_action[0]);
+	tuple<int, int, vector<int>, int> state_action = saved_state_action[0];
+
+	// calculate Q_local
+	float Q_local = calculateQLocal(state_action, dt_in_sec);
+
+	// calculate Q
+	Q_new = (1 - learning_rate) * Q_table[state_action] + learning_rate * Q_local;
+
+	// update Q_table & N_table
+	updateQTable(state_action, Q_new);
+	updateNTable(state_action);
+
+	// check if the updated value is better than existing
+	checkBiggestQValue(state_action);
+}
+
+float Engine::calculateQLocal(tuple<int, int, vector<int>, int> state_action, float time_elapsed) {
+	// initialize
+	float Q_local;
+	
+	tuple<int, int, vector<int>> next_state = calculateNextState(state_action, time_elapsed);
 	
 	// max Q(s(t+1), a)
 	float max = 0.f;
@@ -614,12 +631,12 @@ float Engine::calculateQLocal(tuple<int, int, vector<int>, int> state_action, fl
 	if (it2 == Q_table.end()) {
 		Q_table.emplace(next_state_flap, 0.f);
 	}
-	if (max < Q_table[next_state_flap]) {		// if they're equal, always no flap
+	if (max <= Q_table[next_state_flap]) {		// if they're equal, always flap
 		max = Q_table[next_state_flap];	
 	}
 
 	// reward * discount * max Q_local
-	Q_local = calculateReward() * discount_factor * max;
+	Q_local = calculateReward() + discount_factor * max;
 
 	return Q_local;
 }
@@ -627,17 +644,38 @@ float Engine::calculateQLocal(tuple<int, int, vector<int>, int> state_action, fl
 float Engine::calculateReward() {
 	// initialize
 	float reward = 0.f;
+	tuple<int, int, vector<int>, int> state_action = saved_state_action[0];
 
+	// collision
+	checkCollision();
+	if (is_collision) {
+		reward = -1.f;
+	}
+	// passed a pipe
+	else if (score > score_old) {
+		reward = 1.f;
+		score_old = score;
+	}
+	// survived
+	else {
+		reward = 0.1;
 
-	is_collision == true;
+		// encourage flapping away from ground
+		if (GROUND - get<1>(state_action) <= 10 && get<3>(state_action) == 1) {
+			reward = .25;
+		}
+		// encourage being within pipe opening
+		if (get<1>(state_action) < get<2>(state_action)[1] + PIPE_OPENING_COLLISION_OFFSET) {
+			reward = .50;
+		}
 
-
+	}
 
 	return reward;
 }
 
-float Engine::updateQTable(tuple<int, int, vector<int>, int> state_action) {
-	return 0;
+void Engine::updateQTable(tuple<int, int, vector<int>, int> state_action, float Q_new) {
+	Q_table[state_action] = Q_new;
 }
 
 /*
@@ -647,7 +685,7 @@ updateNTable()
 	RETURN:
 	EFFECT:
 */
-int Engine::updateNTable(tuple<int, int, vector<int>, int> state_action) {
+void Engine::updateNTable(tuple<int, int, vector<int>, int> state_action) {
 	// initialize
 	unordered_map<tuple<int, int, vector<int>, int>, int, TupleHash>::iterator it = N_table.find(state_action);
 
@@ -655,8 +693,6 @@ int Engine::updateNTable(tuple<int, int, vector<int>, int> state_action) {
 	if (it != N_table.end()) {
 		N_table[state_action] = it->second++;
 	}
-
-	return 0;
 }
 
 

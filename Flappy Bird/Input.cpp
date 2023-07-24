@@ -13,11 +13,23 @@ void Engine::input(int action) {
 	if (Keyboard::isKeyPressed(Keyboard::Escape))
 		gameWindow.close();
 
-	// jump
-	if (action == 1) {
-		start_pressed = true;
-		is_space_pressed = true;
+	// --- jump ---
+	// human mode
+	if (!ai_mode) {
+		if (Keyboard::isKeyPressed(Keyboard::Space)) {
+			start_pressed = true;
+			is_space_pressed = true;
+		}
+		else
+			is_space_pressed = false;
 	}
-	else
-		is_space_pressed = false;
+	// ai mode
+	else {
+		if (action == 1) {
+			start_pressed = true;
+			is_space_pressed = true;
+		}
+		else
+			is_space_pressed = false;
+	}
 }
