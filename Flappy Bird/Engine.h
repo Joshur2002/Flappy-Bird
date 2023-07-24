@@ -109,6 +109,7 @@ private:
 	bool is_collision;
 	bool updated_score;
 	bool god_mode;
+	bool ai_mode;
 
 	// vars
 	float X_Speed;
@@ -141,6 +142,7 @@ private:
 	
 	void learn(float dt_in_sec);
 	float calculateQLocal(tuple<int, int, vector<int>, int> state_action, float time_elapsed);
+	float calculateReward();
 	float updateQTable(tuple<int, int, vector<int>, int> state_action);
 	int updateNTable(tuple<int, int, vector<int>, int> state_action);
 
@@ -152,6 +154,7 @@ private:
 	// variables
 	float epsilon;
 	float decay_factor;
+	float discount_factor;
 	int n_first_times;
 	/*
 		0 -- saved state/action pair

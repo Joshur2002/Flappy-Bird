@@ -1,8 +1,9 @@
 #include "Engine.h"
 
 Engine::Engine() : gen(rd()) {
-	// god mode
+	// debug/player modes
 	god_mode = false;
+	ai_mode = true;
 
 	// window
 	Vector2f resolution;
@@ -71,11 +72,10 @@ Engine::Engine() : gen(rd()) {
 	score = 0;
 	epsilon = 0.8;
 	decay_factor = .95;
+	discount_factor = .9;
 	n_first_times = 10;
 	biggest_Q_value = 0.f;
-	/*static random_device rd;
-	static mt19937 gen(rd());*/
-	//gen(rd());
+
 }
 
 /*
@@ -145,6 +145,10 @@ void Engine::update(float dt_as_sec) {
 
 	// check collisions
 	checkCollision();
+
+	// check reset
+	if (is_collision)
+		reset();
 }
 
 /*
@@ -170,7 +174,7 @@ void Engine::checkCollision() {
 			if (Flappy_position.x >= pipes[i].pipe_up_sprite.getPosition().x + PIPE_LEFT_COLLISION_OFFSET && Flappy_position.x <= pipes[i].pipe_up_sprite.getPosition().x + PIPE_RIGHT_COLLISION_OFFSET && Flappy_position.y >= pipes[i].pipe_up_sprite.getPosition().y + PIPE_OPENING_COLLISION_OFFSET ||
 				Flappy_position.x >= pipes[i].pipe_down_sprite.getPosition().x + PIPE_LEFT_COLLISION_OFFSET && Flappy_position.x <= pipes[i].pipe_down_sprite.getPosition().x + PIPE_RIGHT_COLLISION_OFFSET && Flappy_position.y <= pipes[i].pipe_down_sprite.getPosition().y - PIPE_OPENING_COLLISION_OFFSET) {
 				is_collision = true;
-				reset();
+				//reset();
 			}
 		}
 	}
@@ -370,7 +374,8 @@ void Engine::start() {
 			dt2 = clock2.restart();
 			dt2_in_sec = 0.f;
 		}
- 		//input();
+		if (!ai_mode)
+ 			input(0);
 		update(dt_in_sec);
 		draw();
 	}
@@ -574,27 +579,63 @@ void Engine::learn(float dt_in_sec) {
 
 float Engine::calculateQLocal(tuple<int, int, vector<int>, int> state_action, float time_elapsed) {
 	// initialize
-	/*Vector2i flappy_pos = {get<0>(saved_state_action[0]), get<1>(saved_state_action[0])};
-	Vector2i pipe_up_pos = {get<2>(saved_state_action[0])[0], get<2>(saved_state_action[0])[1]};
-	Vector2i pipe_down_pos = { get<2>(saved_state_action[0])[2], get<2>(saved_state_action[0])[3]};*/
 	tuple<int, int, vector<int>> next_state = make_tuple(get<0>(state_action), get<1>(state_action), get<2>(state_action));
 	float Q_local = 0.f;
 	Vector2f Flappy_position = Flappy.getFlappy_Position();
 	Vector2f Flappy_velocity = Flappy.getFlappy_Velocity();
+	Vector2i pipe_up_position = { get<2>(next_state)[0], get<2>(next_state)[1] };
+	Vector2i pipe_down_position = { get<2>(next_state)[2], get<2>(next_state)[3] };
 	
-	// action decided no flap
+	// update flappy's y
 	if (get<3>(state_action) != 1) {
-		get<1>(next_state) = Flappy_position.y + (time_elapsed * Flappy_velocity.y) + (.5 * GRAVITY * time_elapsed * time_elapsed);;
+		get<1>(next_state) = Flappy_position.y + (time_elapsed * Flappy_velocity.y) + (.5 * GRAVITY * time_elapsed * time_elapsed);
 	}
-	// action decided flap
 	else {
-		get<1>(next_state) += -1450 + GRAVITY * time_elapsed;
+		Flappy_velocity.y = -1450 + GRAVITY * time_elapsed;
+		get<1>(next_state) = Flappy_position.y + (time_elapsed * Flappy_velocity.y) + (.5 * GRAVITY * time_elapsed * time_elapsed);
 	}
+	// update pipes' x
+	get<2>(next_state)[0] = pipe_up_position.x - X_Speed * time_elapsed;
+	get<2>(next_state)[2] = pipe_down_position.x - X_Speed * time_elapsed;
 	
+	// max Q(s(t+1), a)
+	float max = 0.f;
+	tuple<int, int, vector<int>, int> next_state_no_flap = tuple_cat(next_state, make_tuple(0));
+	tuple<int, int, vector<int>, int> next_state_flap = tuple_cat(next_state, make_tuple(1));
 	
+	// add to Q-table if not already in
+	unordered_map<tuple<int, int, vector<int>, int>, float, TupleHash>::iterator it1 = Q_table.find(next_state_no_flap);
+	if (it1 == Q_table.end()) {
+		Q_table.emplace(next_state_no_flap, 0.f);
+	}
+	max = Q_table[next_state_no_flap];	
 	
+	unordered_map<tuple<int, int, vector<int>, int>, float, TupleHash>::iterator it2 = Q_table.find(next_state_flap);
+	if (it2 == Q_table.end()) {
+		Q_table.emplace(next_state_flap, 0.f);
+	}
+	if (max < Q_table[next_state_flap]) {		// if they're equal, always no flap
+		max = Q_table[next_state_flap];	
+	}
+
+	// reward * discount * max Q_local
+	Q_local = calculateReward() * discount_factor * max;
+
 	return Q_local;
 }
+
+float Engine::calculateReward() {
+	// initialize
+	float reward = 0.f;
+
+
+	is_collision == true;
+
+
+
+	return reward;
+}
+
 float Engine::updateQTable(tuple<int, int, vector<int>, int> state_action) {
 	return 0;
 }
