@@ -3,12 +3,13 @@
 
 ## Description
 - Reproduced in C++
-- Reinforcement-learning with Q-learning and Epsilon-Greedy algorithms.
-   - Unordered map with custom hash function used for Q-table and N-table
-   - Reinforcement learning algorithm with Q-learning is split into four parts:
-      - Initialize: Checks whether the tuple has been registered in Q-table and/or N-table
-      - Action: Decides whether to explore or exploit based off hyperparameters
-      - Learn: Updates the tables with new values
+- Currently implemented/implementing:
+   - Reinforcement-learning with Q-learning and Epsilon-Greedy algorithms.
+      - Unordered map with custom hash function used for Q-table and N-table
+      - Split into three main parts:
+         - Initialize: Checks whether the tuple has been registered in Q-table and/or N-table
+         - Action: Decides whether to explore or exploit based on hyperparameters
+         - Learn: Updates the tables with new values
 
 ## Specs
 - Used Visual Studios 2022.
